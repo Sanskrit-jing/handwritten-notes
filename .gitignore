@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+output/
+config.json
+backgrounds/user/
+build/
+dist/
+fonts/
