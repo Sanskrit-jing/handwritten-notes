@@ -44,6 +44,7 @@ from app.params import (
     DPI_BASE, DPI_PREVIEW, INK_COLORS, PAPER_STYLES, Params,
     REWRITE_MODES, STRIKE_MODES, load_config, save_config,
 )
+from app.paths import RESOURCE_DIR
 from app.renderer import render_page
 
 GAP = 36  # 预览页间距（场景像素）
@@ -1686,8 +1687,7 @@ class MainWindow(QMainWindow):
         super().closeEvent(e)
 
 
-APP_ICON_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "ico", "icon.png")
+APP_ICON_PATH = os.path.join(RESOURCE_DIR, "ico", "icon.png")
 
 
 def main():
