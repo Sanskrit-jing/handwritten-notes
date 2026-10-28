@@ -22,6 +22,7 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
+UsePreviousAppDir=no
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
