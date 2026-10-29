@@ -150,22 +150,31 @@ class GlyphEngine:
         return 0.5 * float(np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y))
 
     @staticmethod
-    def _point_in_poly(p, poly: np.ndarray) -> bool:
-        """射线法：p 是否在多边形内（p、poly 均为 (x, y)）。"""
-        x, y = p
-        px, py = poly[:, 0], poly[:, 1]
+    def _points_inside(inner: np.ndarray, outer: np.ndarray) -> bool:
+        """射线法：inner 的全部点是否都落在 outer 内（分块向量化）。"""
+        step = 256
+        px, py = outer[:, 0], outer[:, 1]
         x2, y2 = np.roll(px, -1), np.roll(py, -1)
-        cond = ((py > y) != (y2 > y))
-        with np.errstate(divide="ignore", invalid="ignore"):
-            xint = (x2 - px) * (y - py) / (y2 - py) + px
-        inside = np.logical_and(cond, x < xint)
-        return bool(np.sum(inside) % 2 == 1)
+        horiz = py == y2
+        px, py, x2, y2 = px[~horiz], py[~horiz], x2[~horiz], y2[~horiz]
+        for s in range(0, len(inner), step):
+            x = inner[s:s + step, 0][:, None]
+            y = inner[s:s + step, 1][:, None]
+            cond = (py > y) != (y2 > y)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                xint = (x2 - px) * (y - py) / (y2 - py) + px
+            cross = np.logical_and(cond, x < xint).sum(axis=1) % 2
+            if not np.all(cross == 1):
+                return False
+        return True
 
     def _bind(self, contours):
         """外轮廓与洞绑定成笔画。
 
-        嵌套深度（被几个其他轮廓包含）为偶 -> 外轮廓；奇 -> 洞。
+        嵌套深度（被几个其他轮廓**完全包含**）为偶 -> 外轮廓；奇 -> 洞；
         洞归属包含它的、面积最小的直接外轮廓。
+        手写字体笔画轮廓互相交叠，单点 probe 会把交叠笔画误判成洞，
+        故判定要求 inner 的全部点都落在 outer 内（包围盒预筛加速）。
         """
         n = len(contours)
         if n == 0:
@@ -173,29 +182,40 @@ class GlyphEngine:
         if n == 1:
             return [{"outer": contours[0], "holes": []}]
 
+        boxes = [(c[:, 0].min(), c[:, 0].max(), c[:, 1].min(), c[:, 1].max())
+                 for c in contours]
+
+        def bbox_inside(bi, bj):
+            return not (bi[0] < bj[0] or bi[1] > bj[1]
+                        or bi[2] < bj[2] or bi[3] > bj[3])
+
         depths = [0] * n
         for i in range(n):
-            probe = contours[i][0]
             for j in range(n):
-                if i != j and self._point_in_poly(probe, contours[j]):
+                if i != j and bbox_inside(boxes[i], boxes[j]) \
+                        and self._points_inside(contours[i], contours[j]):
                     depths[i] += 1
 
         strokes = []
+        outer_idx = []
         for i, c in enumerate(contours):
             if depths[i] % 2 == 0:
                 strokes.append({"outer": c, "holes": []})
+                outer_idx.append(i)
         for i, c in enumerate(contours):
             if depths[i] % 2 == 1:
                 best, best_area = None, None
-                for s in strokes:
-                    if self._point_in_poly(c[0], s["outer"]):
-                        a = abs(self._signed_area(s["outer"]))
+                for k, j in enumerate(outer_idx):
+                    if bbox_inside(boxes[i], boxes[j]) \
+                            and self._points_inside(c, contours[j]):
+                        a = abs(self._signed_area(contours[j]))
                         if best is None or a < best_area:
-                            best, best_area = s, a
+                            best, best_area = k, a
                 if best is not None:
-                    best["holes"].append(c)
+                    strokes[best]["holes"].append(c)
                 else:  # 兜底：找不到归属就当外轮廓
                     strokes.append({"outer": c, "holes": []})
+                    outer_idx.append(i)
         return strokes
 
     # ---------- 逐笔画扰动 ----------
