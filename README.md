@@ -55,8 +55,9 @@
 ```powershell
 git clone https://github.com/Sanskrit-jing/handwritten-notes.git
 cd handwritten-notes
-pip install PyQt6 python-docx numpy Pillow fontTools
-python main.py
+pip install -r requirements.txt
+cd web && npm install && npm run build && cd ..
+python desktop.py   # 桌面窗口（pywebview）；或 python server.py 后浏览器访问 127.0.0.1:8300
 ```
 
 可选依赖（仅"用 Word 文档生成背景模板"功能需要，且要求本机装有 Microsoft Word）：
@@ -85,7 +86,8 @@ pyinstaller HandwrittenNotes.spec     # 产出 dist/HandwrittenNotes/（onedir �
 ## 项目结构
 
 ```
-main.py              PyQt6 主程序（三栏界面 + 交互流程 + 渲染调度）
+server.py            FastAPI 服务（app/ 引擎的 HTTP 接口 + 托管 web/dist）
+desktop.py           桌面入口（pywebview 壳 + 内嵌服务）
 app/
   docx_parser.py     Word 文档解析（段落 / 对齐 / 字号）
   layout_engine.py   排版引擎（自由排版 / Word 版式）
