@@ -1,8 +1,8 @@
 <script setup>
-/** 主界面：工具栏 + 参数面板 + 预览 + 文本抽屉，统一调度服务端状态。 */
+/** 主界面：三栏布局——左参数 | 中预览（主角）| 右文本编辑（常驻对照）。 */
 import { onMounted, ref } from 'vue'
 import {
-  NBadge, NButton, NDrawer, NDrawerContent, NInput, NLayout,
+  NBadge, NButton, NInput, NLayout,
   NLayoutContent, NLayoutSider, NPopconfirm, NUpload, useMessage,
 } from 'naive-ui'
 import { deleteBg, getMeta, postBg, postConfig, postDocx, postText } from './api.js'
@@ -14,8 +14,8 @@ const message = useMessage()
 const meta = ref({ params: {}, enums: {}, fonts: [] })
 const page = ref(0)
 const tick = ref(1)          // 图片刷新时钟：任何会改变渲染的状态变化后自增
-const showEditor = ref(false)
 const editorText = ref('')
+const dirty = ref(false)     // 文本已编辑未保存
 const busy = ref(false)
 
 onMounted(async () => {
@@ -28,9 +28,9 @@ onMounted(async () => {
   }
 })
 
-function applyMeta(m) {
+function applyMeta(m, syncText = false) {
   meta.value = m
-  editorText.value = m.text ?? editorText.value
+  if (syncText || !dirty.value) editorText.value = m.text ?? ''
   if (m.total_pages > 0 && page.value >= m.total_pages) page.value = m.total_pages - 1
   tick.value++
 }
@@ -48,15 +48,10 @@ function onFontsUpdated(fonts) {
   message.success('字体已上传')
 }
 
-function openEditor() {
-  editorText.value = meta.value.text ?? ''
-  showEditor.value = true
-}
-
 async function saveText() {
   try {
-    applyMeta(await postText(editorText.value))
-    showEditor.value = false
+    applyMeta(await postText(editorText.value), true)
+    dirty.value = false
     message.success(`已更新：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
   } catch (e) {
     message.error(e.message)
@@ -66,7 +61,8 @@ async function saveText() {
 async function onDocx({ file, onFinish, onError }) {
   try {
     busy.value = true
-    applyMeta(await postDocx(file.file))
+    dirty.value = false
+    applyMeta(await postDocx(file.file), true)
     onFinish()
     message.success(`已导入：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
   } catch (e) {
@@ -121,7 +117,6 @@ function exportFile(kind) {
     </n-layout-sider>
     <n-layout-content content-style="height: 100%; display: flex; flex-direction: column;">
       <div class="toolbar">
-        <n-button size="small" @click="openEditor">编辑文本</n-button>
         <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
           <n-button size="small" :loading="busy">导入 Word</n-button>
         </n-upload>
@@ -149,18 +144,24 @@ function exportFile(kind) {
       </div>
       <PreviewPane v-model:page="page" :total-pages="meta.total_pages ?? 0" :tick="tick" />
     </n-layout-content>
+    <n-layout-sider placement="right" :width="380" bordered
+                    content-style="height: 100%; display: flex; flex-direction: column;">
+      <div class="editor-head">
+        <span class="editor-title">文本</span>
+        <span v-if="dirty" class="editor-dirty">未保存</span>
+      </div>
+      <div class="editor-body">
+        <n-input v-model:value="editorText" type="textarea" @update:value="dirty = true"
+                 :autosize="false" style="height: 100%"
+                 placeholder="每行一个段落，支持直接粘贴" />
+      </div>
+      <div class="editor-foot">
+        <n-button size="small" :type="dirty ? 'warning' : 'primary'" @click="saveText">
+          保存并重排
+        </n-button>
+      </div>
+    </n-layout-sider>
   </n-layout>
-
-  <n-drawer v-model:show="showEditor" :width="560">
-    <n-drawer-content title="编辑文本">
-      <n-input v-model:value="editorText" type="textarea"
-               :autosize="false" style="height: 100%"
-               placeholder="每行一个段落，支持直接粘贴" />
-      <template #footer>
-        <n-button type="primary" @click="saveText">保存并重排</n-button>
-      </template>
-    </n-drawer-content>
-  </n-drawer>
 </template>
 
 <style scoped>
@@ -195,5 +196,31 @@ function exportFile(kind) {
   padding: 6px 18px 0;
   font-size: 12px;
   color: #7a8471;
+}
+.editor-head {
+  padding: 14px 14px 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.editor-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.editor-dirty {
+  font-size: 11px;
+  color: #f0a020;
+}
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 12px;
+  display: flex;
+}
+.editor-foot {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
