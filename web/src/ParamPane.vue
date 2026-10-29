@@ -62,7 +62,7 @@ async function onFontUpload({ file, onFinish, onError }) {
           <n-select v-model:value="local.font_path" :options="fontOptions()"
                     :consistent-menu-width="false" class="font-select"
                     filterable tag size="tiny" />
-          <n-upload :custom-request="onFontUpload" :show-upload-list="false"
+          <n-upload :custom-request="onFontUpload" :show-file-list="false"
                     accept=".ttf,.ttc,.otf">
             <n-button size="tiny" style="margin-left: 4px">上传</n-button>
           </n-upload>
