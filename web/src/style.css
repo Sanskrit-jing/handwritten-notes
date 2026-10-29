@@ -7,9 +7,12 @@ html, body, #app {
   box-sizing: border-box;
 }
 
-/* 预览页纸张投影 */
+/* 预览页纸张投影：近影锐利 + 远影柔和，呈浮起纸片感 */
 .page-sheet {
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 8px 28px rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   display: block;
   max-width: 100%;
 }
