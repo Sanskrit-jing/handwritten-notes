@@ -144,6 +144,7 @@ function exportFile(kind) {
           <div class="editor-head">
             <span class="editor-title">文本</span>
             <span v-if="dirty" class="editor-dirty">未保存</span>
+            <span class="editor-count">{{ editorText.length }} 字</span>
           </div>
           <div class="editor-body">
             <n-input v-model:value="editorText" type="textarea" @update:value="dirty = true"
@@ -248,19 +249,24 @@ function exportFile(kind) {
   background: #e9ece6;
 }
 .editor-head {
-  padding: 14px 14px 6px;
+  padding: 6px 14px;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
 }
 .editor-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 1px;
 }
 .editor-dirty {
   font-size: 11px;
   color: #f0a020;
+}
+.editor-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #a3ab9c;
 }
 .editor-body {
   flex: 1;
