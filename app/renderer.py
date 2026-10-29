@@ -10,9 +10,10 @@
 """
 import logging
 import math
+import os
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from .glyph_engine import glyph_engine
 from .params import INK_COLORS, PAGE_H, PAGE_W, Params
@@ -56,9 +57,9 @@ def _draw_paper(img, draw, layout, params, page_idx, dev):
     # 背景模板优先：整页位图铺底（页数超出模板页数时循环复用），不再画纸张装饰
     bg_images = getattr(params, "bg_images", None)
     if bg_images:
-        img.paste(
-            bg_images[page_idx % len(bg_images)].resize(img.size, Image.LANCZOS),
-            (0, 0))
+        idx = page_idx % len(bg_images)
+        img.paste(bg_images[idx].resize(img.size, Image.LANCZOS), (0, 0))
+        _draw_page_number(img, bg_images[idx], page_idx)
         return
 
     ml = params.margin_left_px
@@ -87,6 +88,61 @@ def _draw_paper(img, draw, layout, params, page_idx, dev):
                       fill=RULE_COLOR, width=max(1, round(1.5 * dev)))
             k += 1
     # 空白页：无装饰
+
+
+# ---------- 页脚页码 ----------
+
+def _draw_page_number(img, bg, page_idx):
+    """在背景模板页脚“第 页”占位空隙补写页码数字。
+
+    检测模板底部最下方文字行的最右两个字簇（即“第”“页”），
+    数字画在两簇空隙中心，字号匹配簇高，颜色取簇内暗像素中位色
+    （自适应黑/红模板）。无占位（不足两簇/无空隙）则不画。
+    """
+    gray = np.asarray(bg.convert("L"))
+    h, w = gray.shape
+    y0 = round(h * 0.9)
+    dark = gray[y0:] < 160
+
+    ridx = np.flatnonzero(dark.any(axis=1))
+    if ridx.size == 0:
+        return
+    rows = np.split(ridx, np.flatnonzero(np.diff(ridx) > 4) + 1)
+    for r in reversed(rows):   # 自底向上找首个非横线文字行
+        band = dark[r[0]:r[-1] + 1]
+        cols = np.flatnonzero(band.any(axis=0))
+        if cols[-1] - cols[0] > w * 0.5:
+            continue
+        cgroups = np.split(cols, np.flatnonzero(np.diff(cols) > 12) + 1)
+        if len(cgroups) < 2:
+            return
+        gap_l, gap_r = int(cgroups[-2][-1]), int(cgroups[-1][0])
+        if gap_r - gap_l < 10:
+            return
+        mask = np.zeros(dark.shape, bool)
+        for g in (cgroups[-2], cgroups[-1]):
+            mask[r[0]:r[-1] + 1, int(g[0]):int(g[-1]) + 1] = True
+        px = np.asarray(bg)[y0:][mask & dark]
+        color = tuple(int(v) for v in np.median(px, axis=0))
+        sy = img.height / h
+        font = _page_num_font(round((int(r[-1]) - int(r[0]) + 1) * sy * 1.3))
+        if font is None:
+            return
+        ImageDraw.Draw(img).text(
+            ((gap_l + gap_r) / 2 * img.width / w,
+             (y0 + (int(r[0]) + int(r[-1])) / 2) * sy),
+            str(page_idx + 1), font=font, fill=color, anchor="mm")
+        return
+
+
+def _page_num_font(size: int):
+    """页码印刷字体（宋体，与模板页脚一致）；不可用则返回 None。"""
+    path = os.path.join(os.environ.get("WINDIR", r"C:\Windows"),
+                        "Fonts", "simsun.ttc")
+    try:
+        return ImageFont.truetype(path, size)
+    except OSError:
+        return None
 
 
 # ---------- 字符 ----------
