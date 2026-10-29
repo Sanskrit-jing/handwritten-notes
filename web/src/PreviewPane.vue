@@ -9,6 +9,12 @@ const props = defineProps({
 })
 const page = defineModel('page', { type: Number, required: true })
 
+/** 翻页器显示层 1-based，内部 page 保持 0-based 直连 /api/page/。 */
+const pageOneBased = computed({
+  get: () => page.value + 1,
+  set: (v) => { page.value = v - 1 },
+})
+
 const loading = ref(true)
 const failed = ref(false)
 
@@ -50,7 +56,7 @@ watch(() => props.totalPages, (n) => {
         </n-spin>
       </div>
       <div class="pager">
-        <n-pagination v-model:page="page" :page-count="totalPages" simple />
+        <n-pagination v-model:page="pageOneBased" :page-count="totalPages" simple />
       </div>
     </template>
   </div>
