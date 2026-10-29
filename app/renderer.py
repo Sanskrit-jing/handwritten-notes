@@ -59,7 +59,8 @@ def _draw_paper(img, draw, layout, params, page_idx, dev):
     if bg_images:
         idx = page_idx % len(bg_images)
         img.paste(bg_images[idx].resize(img.size, Image.LANCZOS), (0, 0))
-        _draw_page_number(img, bg_images[idx], page_idx)
+        if params.page_number:
+            _draw_page_number(img, bg_images[idx], page_idx)
         return
 
     ml = params.margin_left_px

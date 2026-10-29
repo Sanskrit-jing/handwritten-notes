@@ -3,7 +3,7 @@
 import { reactive, watch } from 'vue'
 import {
   NButton, NCollapse, NCollapseItem, NForm, NFormItem, NInputNumber,
-  NSelect, NSlider, NUpload,
+  NSelect, NSlider, NSwitch, NUpload,
 } from 'naive-ui'
 import { postFont } from './api.js'
 
@@ -17,7 +17,7 @@ const FIELDS = [
   'font_path', 'font_size_pt', 'line_factor',
   'margin_top_mm', 'margin_bottom_mm', 'margin_left_mm', 'margin_right_mm',
   'paper', 'error_rate', 'rewrite_mode', 'strike_mode', 'ink_color',
-  'stroke_weight', 'dx_amp', 'dy_amp', 'rot_amp',
+  'stroke_weight', 'dx_amp', 'dy_amp', 'rot_amp', 'page_number',
 ]
 const local = reactive(Object.fromEntries(FIELDS.map(k => [k, null])))
 let filled = false
@@ -90,6 +90,9 @@ async function onFontUpload({ file, onFinish, onError }) {
         <n-form-item :label="`行距 ×${(local.line_factor ?? 0).toFixed(2)}`">
           <n-slider v-model:value="local.line_factor" :min="1.1" :max="2.6"
                     :step="0.05" />
+        </n-form-item>
+        <n-form-item label="页脚页码">
+          <n-switch v-model:value="local.page_number" size="small" />
         </n-form-item>
       </n-collapse-item>
 

@@ -86,6 +86,8 @@ class Params:
     # 信纸横线表：每页 [(y, x0, x1)] @300dpi，应用背景时从位图检测；
     # 非空时排版引擎"一行对一线"吸附横线（版式类：触发全量重排）
     bg_rules: list = field(default_factory=list)
+    # 页脚页码开关：背景模板模式下在"第 页"空隙补写页码数字（默认关）
+    page_number: bool = False
 
     # ---- Word 版式模式（layout_mode="word"）：排版交给 Word，程序按坐标誊写 ----
     layout_mode: str = "free"        # "free"=程序自排版 | "word"=Word 决定每个字的位置
@@ -175,7 +177,7 @@ _SAVE_FIELDS = [
     "margin_top_mm", "margin_bottom_mm", "margin_left_mm", "margin_right_mm",
     "paper", "error_rate", "dx_amp", "dy_amp", "rot_amp",
     "rewrite_mode", "strike_mode", "ink_color", "stroke_weight",
-    "layout_mode", "handwriting_scale",
+    "layout_mode", "handwriting_scale", "page_number",
     "doc_path", "bg_template_path",
     "last_dir_doc", "last_dir_bg", "last_dir_font", "last_dir_export",
 ]

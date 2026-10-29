@@ -44,7 +44,7 @@ _LAYOUT_FIELDS = {
     "paper", "error_rate", "rewrite_mode", "handwriting_scale",
 }
 _RENDER_FIELDS = {"dx_amp", "dy_amp", "rot_amp", "strike_mode",
-                  "ink_color", "stroke_weight", "seed"}
+                  "ink_color", "stroke_weight", "seed", "page_number"}
 
 _ENUM_CHECKS = {
     "paper": PAPER_STYLES,
@@ -52,7 +52,7 @@ _ENUM_CHECKS = {
     "rewrite_mode": REWRITE_MODES,
     "ink_color": list(INK_COLORS),
 }
-_FLOAT_FIELDS = (_LAYOUT_FIELDS | _RENDER_FIELDS) - set(_ENUM_CHECKS) - {"seed", "font_path"}
+_FLOAT_FIELDS = (_LAYOUT_FIELDS | _RENDER_FIELDS) - set(_ENUM_CHECKS) - {"seed", "font_path", "page_number"}
 _FONT_EXTS = (".ttf", ".ttc", ".otf")
 _BG_EXTS = (".png", ".jpg", ".jpeg", ".webp")
 _BG_UPLOAD_DIR = os.path.join(DATA_DIR, "bg_uploads")
