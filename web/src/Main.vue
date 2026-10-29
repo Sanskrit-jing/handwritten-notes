@@ -209,6 +209,10 @@ function exportFile(kind) {
   gap: 8px;
   align-items: center;
 }
+.actions .n-upload {
+  flex: none;
+  width: auto;
+}
 .spacer {
   flex: 1;
 }
