@@ -29,6 +29,15 @@ watch(() => props.totalPages, (n) => {
 <template>
   <div class="preview">
     <div v-if="totalPages <= 0" class="empty">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+          <path d="M16 13H8" />
+          <path d="M16 17H8" />
+        </svg>
+      </div>
       <p>暂无可预览页面</p>
       <p class="hint">导入 Word，或在文本栏输入内容开始</p>
     </div>
@@ -61,6 +70,19 @@ watch(() => props.totalPages, (n) => {
   justify-content: center;
   color: #7a8471;
 }
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e3e7e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a3ab9c;
+  box-shadow: 0 1px 3px rgba(31, 41, 34, 0.05);
+  margin-bottom: 14px;
+}
 .empty .hint {
   font-size: 12px;
   color: #a3ab9c;
@@ -80,6 +102,14 @@ watch(() => props.totalPages, (n) => {
   padding: 6px 0 12px;
   display: flex;
   justify-content: center;
+}
+/* 翻页器胶囊：白底圆角浮条 */
+.pager :deep(.n-pagination) {
+  background: #fff;
+  border: 1px solid #e3e7e0;
+  border-radius: 999px;
+  padding: 4px 14px;
+  box-shadow: 0 1px 3px rgba(31, 41, 34, 0.05);
 }
 .failed {
   padding: 40px;
