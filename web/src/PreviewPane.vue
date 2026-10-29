@@ -30,7 +30,7 @@ watch(() => props.totalPages, (n) => {
   <div class="preview">
     <div v-if="totalPages <= 0" class="empty">
       <p>暂无可预览页面</p>
-      <p class="hint">点击顶部「编辑文本」或「导入 Word」开始</p>
+      <p class="hint">导入 Word，或在文本栏输入内容开始</p>
     </div>
     <template v-else>
       <div class="sheet-wrap">
