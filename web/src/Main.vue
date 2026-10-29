@@ -115,52 +115,55 @@ function exportFile(kind) {
       </div>
       <ParamPane :meta="meta" @change="onParamChange" @fonts-updated="onFontsUpdated" />
     </n-layout-sider>
-    <n-layout-content content-style="height: 100%; display: flex; flex-direction: column;">
-      <div class="toolbar">
-        <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
-          <n-button size="small" :loading="busy">导入 Word</n-button>
-        </n-upload>
-        <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
-          <n-button size="small">背景图片</n-button>
-        </n-upload>
-        <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
-          <template #trigger>
-            <n-button size="small" quaternary>清除背景</n-button>
-          </template>
-          确认清除当前背景模板？
-        </n-popconfirm>
-        <n-button size="small" @click="reshuffle">换一版笔迹</n-button>
-        <div class="spacer" />
-        <n-button size="small" @click="exportFile('png')">导出 PNG</n-button>
-        <n-button size="small" type="primary" @click="exportFile('pdf')">导出 PDF</n-button>
+    <n-layout-content content-style="height: 100%;">
+      <div class="main-cols">
+        <aside class="editor-col">
+          <div class="editor-head">
+            <span class="editor-title">文本</span>
+            <span v-if="dirty" class="editor-dirty">未保存</span>
+          </div>
+          <div class="editor-body">
+            <n-input v-model:value="editorText" type="textarea" @update:value="dirty = true"
+                     :autosize="false" style="height: 100%"
+                     placeholder="每行一个段落，支持直接粘贴" />
+          </div>
+          <div class="editor-foot">
+            <n-button size="small" :type="dirty ? 'warning' : 'primary'" @click="saveText">
+              保存并重排
+            </n-button>
+          </div>
+        </aside>
+        <section class="preview-col">
+          <div class="toolbar">
+            <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
+              <n-button size="small" :loading="busy">导入 Word</n-button>
+            </n-upload>
+            <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
+              <n-button size="small">背景图片</n-button>
+            </n-upload>
+            <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
+              <template #trigger>
+                <n-button size="small" quaternary>清除背景</n-button>
+              </template>
+              确认清除当前背景模板？
+            </n-popconfirm>
+            <n-button size="small" @click="reshuffle">换一版笔迹</n-button>
+            <div class="spacer" />
+            <n-button size="small" @click="exportFile('png')">导出 PNG</n-button>
+            <n-button size="small" type="primary" @click="exportFile('pdf')">导出 PDF</n-button>
+          </div>
+          <div class="info-line">
+            <template v-if="meta.total_pages">
+              {{ meta.total_pages }} 页 · {{ meta.char_count }} 字
+              <n-badge v-if="meta.params?.bg_name" :value="meta.params.bg_name" type="info"
+                       :max-width="160" style="margin-left: 8px" />
+            </template>
+            <template v-else>未加载文档</template>
+          </div>
+          <PreviewPane v-model:page="page" :total-pages="meta.total_pages ?? 0" :tick="tick" />
+        </section>
       </div>
-      <div class="info-line">
-        <template v-if="meta.total_pages">
-          {{ meta.total_pages }} 页 · {{ meta.char_count }} 字
-          <n-badge v-if="meta.params?.bg_name" :value="meta.params.bg_name" type="info"
-                   :max-width="160" style="margin-left: 8px" />
-        </template>
-        <template v-else>未加载文档</template>
-      </div>
-      <PreviewPane v-model:page="page" :total-pages="meta.total_pages ?? 0" :tick="tick" />
     </n-layout-content>
-    <n-layout-sider placement="right" :width="380" bordered
-                    content-style="height: 100%; display: flex; flex-direction: column;">
-      <div class="editor-head">
-        <span class="editor-title">文本</span>
-        <span v-if="dirty" class="editor-dirty">未保存</span>
-      </div>
-      <div class="editor-body">
-        <n-input v-model:value="editorText" type="textarea" @update:value="dirty = true"
-                 :autosize="false" style="height: 100%"
-                 placeholder="每行一个段落，支持直接粘贴" />
-      </div>
-      <div class="editor-foot">
-        <n-button size="small" :type="dirty ? 'warning' : 'primary'" @click="saveText">
-          保存并重排
-        </n-button>
-      </div>
-    </n-layout-sider>
   </n-layout>
 </template>
 
@@ -196,6 +199,23 @@ function exportFile(kind) {
   padding: 6px 18px 0;
   font-size: 12px;
   color: #7a8471;
+}
+.main-cols {
+  height: 100%;
+  display: flex;
+}
+.editor-col {
+  width: 360px;
+  flex: none;
+  border-right: 1px solid #efeff5;
+  display: flex;
+  flex-direction: column;
+}
+.preview-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 .editor-head {
   padding: 14px 14px 6px;
