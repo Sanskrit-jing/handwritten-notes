@@ -21,6 +21,10 @@ pyz = PYZ(a.pure)
 a.binaries = [b for b in a.binaries if not any(
     k in b[0] for k in ('onnxruntime', 'pikepdf', 'opengl32sw', 'PIL/_avif'))]
 
+# 排除开发期残留在源 backgrounds/user 下的用户模板（运行时由数据根自建）
+a.datas = [d for d in a.datas
+           if 'backgrounds/user' not in d[1].replace('\\', '/')]
+
 exe = EXE(
     pyz,
     a.scripts,
