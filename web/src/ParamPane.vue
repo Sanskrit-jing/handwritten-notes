@@ -56,7 +56,8 @@ async function onFontUpload({ file, onFinish, onError }) {
   <n-form label-placement="left" label-width="96" size="small" class="param-pane"
           :show-feedback="false">
     <n-collapse :default-expanded-names="['font', 'paper']">
-      <n-collapse-item title="字体字号" name="font">
+      <n-collapse-item name="font">
+        <template #header><span class="gdot" style="background: #18a058" />字体字号</template>
         <n-form-item label="字体">
           <n-select v-model:value="local.font_path" :options="fontOptions()"
                     filterable tag size="tiny" />
@@ -71,7 +72,8 @@ async function onFontUpload({ file, onFinish, onError }) {
         </n-form-item>
       </n-collapse-item>
 
-      <n-collapse-item title="纸张与版式" name="paper">
+      <n-collapse-item name="paper">
+        <template #header><span class="gdot" style="background: #2080f0" />纸张与版式</template>
         <n-form-item label="纸张样式">
           <n-select v-model:value="local.paper"
                     :options="(meta.enums?.paper ?? []).map(v => ({ label: v, value: v }))" />
@@ -90,7 +92,8 @@ async function onFontUpload({ file, onFinish, onError }) {
         </n-form-item>
       </n-collapse-item>
 
-      <n-collapse-item title="真实感 · 抖动与涂改" name="real">
+      <n-collapse-item name="real">
+        <template #header><span class="gdot" style="background: #f0a020" />真实感 · 抖动与涂改</template>
         <n-form-item :label="`错字率 ${(100 * (local.error_rate ?? 0)).toFixed(1)}%`">
           <n-slider v-model:value="local.error_rate" :min="0" :max="0.05" :step="0.005" />
         </n-form-item>
@@ -113,7 +116,8 @@ async function onFontUpload({ file, onFinish, onError }) {
         </n-form-item>
       </n-collapse-item>
 
-      <n-collapse-item title="墨迹" name="ink">
+      <n-collapse-item name="ink">
+        <template #header><span class="gdot" style="background: #8a6fe8" />墨迹</template>
         <n-form-item label="墨色">
           <n-select v-model:value="local.ink_color"
                     :options="Object.keys(meta.enums?.ink_color ?? {})
@@ -130,16 +134,41 @@ async function onFontUpload({ file, onFinish, onError }) {
 
 <style scoped>
 .param-pane {
-  padding: 8px 12px 24px;
+  padding: 12px 12px 24px;
+}
+/* 折叠组卡片化：白底圆角卡片浮于浅灰工作台底色上 */
+.param-pane :deep(.n-collapse-item) {
+  background: #fff;
+  border: 1px solid #e3e7e0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(31, 41, 34, 0.05);
+  overflow: hidden;
 }
 .param-pane :deep(.n-collapse-item__header) {
   font-weight: 600;
+  padding: 10px 14px;
 }
-.param-pane :deep(.n-collapse-item__content) {
-  padding-top: 2px;
+.param-pane :deep(.n-collapse-item__header-main) {
+  display: flex;
+  align-items: center;
+}
+.gdot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex: none;
+}
+.param-pane :deep(.n-collapse-item__content-inner) {
+  padding: 0 14px 12px;
 }
 .param-pane :deep(.n-form-item) {
   margin-bottom: 8px;
+}
+.param-pane :deep(.n-form-item:last-child) {
+  margin-bottom: 4px;
 }
 .margins {
   display: grid;
