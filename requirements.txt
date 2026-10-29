@@ -1,4 +1,4 @@
-PyQt6>=6.7
+pywebview
 python-docx
 Pillow
 numpy
