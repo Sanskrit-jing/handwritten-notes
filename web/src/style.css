@@ -1,0 +1,15 @@
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* 预览页纸张投影 */
+.page-sheet {
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
+  display: block;
+  max-width: 100%;
+}

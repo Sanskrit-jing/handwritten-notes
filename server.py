@@ -10,7 +10,6 @@
 import io
 import os
 import shutil
-import socket
 import tempfile
 import threading
 import traceback
@@ -19,6 +18,7 @@ import zipfile
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from PIL import Image
 
@@ -183,6 +183,7 @@ def _meta() -> dict:
     n = STATE.layout.total_pages if (STATE.layout is not None
                                      and STATE._built_lv == p.layout_version) else None
     return {
+        "text": STATE.text,
         "params": p.to_config(),
         "enums": {
             "paper": PAPER_STYLES,
@@ -330,18 +331,17 @@ def _cleanup(dir_path: str):
     return BackgroundTask(shutil.rmtree, dir_path, ignore_errors=True)
 
 
-def _pick_port() -> int:
-    s = socket.socket()
-    s.bind(("127.0.0.1", 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
+# web/dist 由 FastAPI 托管（开发联调走 vite proxy；冻结后经 _MEIPASS 同样生效）
+_WEB_DIST = os.path.join(RESOURCE_DIR, "web", "dist")
+if os.path.isdir(_WEB_DIST):
+    APP.mount("/", StaticFiles(directory=_WEB_DIST, html=True), name="web")
 
 
 def main():
     os.makedirs(PROJECT_FONTS_DIR, exist_ok=True)
+    port = int(os.environ.get("HN_PORT", "8300"))
     import uvicorn
-    uvicorn.run(APP, host="127.0.0.1", port=_pick_port(), log_level="info")
+    uvicorn.run(APP, host="127.0.0.1", port=port, log_level="info")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,199 @@
+<script setup>
+/** 主界面：工具栏 + 参数面板 + 预览 + 文本抽屉，统一调度服务端状态。 */
+import { onMounted, ref } from 'vue'
+import {
+  NBadge, NButton, NDrawer, NDrawerContent, NInput, NLayout,
+  NLayoutContent, NLayoutSider, NPopconfirm, NUpload, useMessage,
+} from 'naive-ui'
+import { deleteBg, getMeta, postBg, postConfig, postDocx, postText } from './api.js'
+import ParamPane from './ParamPane.vue'
+import PreviewPane from './PreviewPane.vue'
+
+const message = useMessage()
+
+const meta = ref({ params: {}, enums: {}, fonts: [] })
+const page = ref(0)
+const tick = ref(1)          // 图片刷新时钟：任何会改变渲染的状态变化后自增
+const showEditor = ref(false)
+const editorText = ref('')
+const busy = ref(false)
+
+onMounted(async () => {
+  try {
+    meta.value = await getMeta()
+    editorText.value = meta.value.text ?? ''
+    if (meta.value.total_pages > 0) page.value = 0
+  } catch (e) {
+    message.error(`加载失败：${e.message}`)
+  }
+})
+
+function applyMeta(m) {
+  meta.value = m
+  editorText.value = m.text ?? editorText.value
+  if (m.total_pages > 0 && page.value >= m.total_pages) page.value = m.total_pages - 1
+  tick.value++
+}
+
+async function onParamChange(patch) {
+  try {
+    applyMeta(await postConfig(patch))
+  } catch (e) {
+    message.error(e.message)
+  }
+}
+
+function onFontsUpdated(fonts) {
+  meta.value.fonts = fonts
+  message.success('字体已上传')
+}
+
+function openEditor() {
+  editorText.value = meta.value.text ?? ''
+  showEditor.value = true
+}
+
+async function saveText() {
+  try {
+    applyMeta(await postText(editorText.value))
+    showEditor.value = false
+    message.success(`已更新：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
+  } catch (e) {
+    message.error(e.message)
+  }
+}
+
+async function onDocx({ file, onFinish, onError }) {
+  try {
+    busy.value = true
+    applyMeta(await postDocx(file.file))
+    onFinish()
+    message.success(`已导入：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
+  } catch (e) {
+    message.error(e.message)
+    onError()
+  } finally {
+    busy.value = false
+  }
+}
+
+async function onBg({ file, onFinish, onError }) {
+  try {
+    const resp = await postBg(file.file)
+    meta.value.params.bg_name = resp.bg_name
+    tick.value++
+    onFinish()
+    message.success('背景已应用')
+  } catch (e) {
+    message.error(e.message)
+    onError()
+  }
+}
+
+async function onBgClear() {
+  try {
+    await deleteBg()
+    meta.value.params.bg_name = ''
+    tick.value++
+  } catch (e) {
+    message.error(e.message)
+  }
+}
+
+function reshuffle() {
+  onParamChange({ seed: (meta.value.params.seed ?? 0) + 1 })
+  message.success('已换一版笔迹')
+}
+
+function exportFile(kind) {
+  window.location.href = `/api/export/${kind}`
+}
+</script>
+
+<template>
+  <n-layout has-sider class="root">
+    <n-layout-sider :width="340" bordered content-style="height: 100%; overflow: auto;">
+      <div class="brand">
+        <span class="logo">手写记录</span>
+        <span class="sub">Web 版</span>
+      </div>
+      <ParamPane :meta="meta" @change="onParamChange" @fonts-updated="onFontsUpdated" />
+    </n-layout-sider>
+    <n-layout-content content-style="height: 100%; display: flex; flex-direction: column;">
+      <div class="toolbar">
+        <n-button size="small" @click="openEditor">编辑文本</n-button>
+        <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
+          <n-button size="small" :loading="busy">导入 Word</n-button>
+        </n-upload>
+        <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
+          <n-button size="small">背景图片</n-button>
+        </n-upload>
+        <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
+          <template #trigger>
+            <n-button size="small" quaternary>清除背景</n-button>
+          </template>
+          确认清除当前背景模板？
+        </n-popconfirm>
+        <n-button size="small" @click="reshuffle">换一版笔迹</n-button>
+        <div class="spacer" />
+        <n-button size="small" @click="exportFile('png')">导出 PNG</n-button>
+        <n-button size="small" type="primary" @click="exportFile('pdf')">导出 PDF</n-button>
+      </div>
+      <div class="info-line">
+        <template v-if="meta.total_pages">
+          {{ meta.total_pages }} 页 · {{ meta.char_count }} 字
+          <n-badge v-if="meta.params?.bg_name" :value="meta.params.bg_name" type="info"
+                   :max-width="160" style="margin-left: 8px" />
+        </template>
+        <template v-else>未加载文档</template>
+      </div>
+      <PreviewPane v-model:page="page" :total-pages="meta.total_pages ?? 0" :tick="tick" />
+    </n-layout-content>
+  </n-layout>
+
+  <n-drawer v-model:show="showEditor" :width="560">
+    <n-drawer-content title="编辑文本">
+      <n-input v-model:value="editorText" type="textarea"
+               :autosize="false" style="height: 100%"
+               placeholder="每行一个段落，支持直接粘贴" />
+      <template #footer>
+        <n-button type="primary" @click="saveText">保存并重排</n-button>
+      </template>
+    </n-drawer-content>
+  </n-drawer>
+</template>
+
+<style scoped>
+.root {
+  height: 100%;
+}
+.brand {
+  padding: 14px 14px 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.logo {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.sub {
+  font-size: 11px;
+  color: #9aa394;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px 0;
+}
+.spacer {
+  flex: 1;
+}
+.info-line {
+  padding: 6px 18px 0;
+  font-size: 12px;
+  color: #7a8471;
+}
+</style>
