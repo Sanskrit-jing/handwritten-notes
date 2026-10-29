@@ -2,10 +2,11 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['desktop.py'],
     pathex=[],
     binaries=[],
-    datas=[('backgrounds', 'backgrounds'), ('ico', 'ico')],
+    datas=[('backgrounds', 'backgrounds'), ('ico', 'ico'),
+           ('web/dist', 'web/dist')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
