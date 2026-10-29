@@ -53,14 +53,14 @@ async function onFontUpload({ file, onFinish, onError }) {
 </script>
 
 <template>
-  <n-form label-placement="left" label-width="96" size="small" class="param-pane"
-          :show-feedback="false">
+  <n-form label-placement="left" label-align="left" label-width="96"
+          size="small" class="param-pane" :show-feedback="false">
     <n-collapse :default-expanded-names="['font', 'paper']">
       <n-collapse-item name="font">
         <template #header><span class="gdot" style="background: #18a058" />字体字号</template>
         <n-form-item label="字体">
           <n-select v-model:value="local.font_path" :options="fontOptions()"
-                    :consistent-menu-width="false"
+                    :consistent-menu-width="false" class="font-select"
                     filterable tag size="tiny" />
           <n-upload :custom-request="onFontUpload" :show-upload-list="false"
                     accept=".ttf,.ttc,.otf">
@@ -179,5 +179,15 @@ async function onFontUpload({ file, onFinish, onError }) {
 }
 .margins .n-input-number {
   width: 100%;
+}
+/* 字体选择框占满标签右侧剩余空间，完整显示字体名；
+   n-upload 组件默认 width:100% 会独占整行，收回到内容宽 */
+.param-pane :deep(.n-upload) {
+  width: auto;
+  flex: none;
+}
+.font-select {
+  flex: 1;
+  min-width: 0;
 }
 </style>
