@@ -138,10 +138,10 @@ function exportFile(kind) {
         <span class="sub">Web 版</span>
       </div>
       <div class="actions">
-        <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
+        <n-upload :custom-request="onDocx" :show-file-list="false" accept=".docx">
           <n-button size="small" :loading="busy">导入 Word</n-button>
         </n-upload>
-        <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
+        <n-upload :custom-request="onBg" :show-file-list="false" accept=".png,.jpg,.jpeg,.webp">
           <n-button size="small">背景图片</n-button>
         </n-upload>
         <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
