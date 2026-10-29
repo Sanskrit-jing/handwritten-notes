@@ -1,5 +1,5 @@
 <script setup>
-/** 主界面：三栏布局——左参数 | 中预览（主角）| 右文本编辑（常驻对照）。 */
+/** 主界面：三栏布局——左参数 | 中文本编辑（常驻对照）| 右预览（主角）。 */
 import { onMounted, ref } from 'vue'
 import {
   NBadge, NButton, NInput, NLayout,
@@ -216,6 +216,7 @@ function exportFile(kind) {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  background: #eef0ec;
 }
 .editor-head {
   padding: 14px 14px 6px;
