@@ -1,6 +1,6 @@
 <script setup>
 /** 主界面：三栏布局——左参数 | 中文本编辑（常驻对照）| 右预览（主角）。 */
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import {
   NBadge, NButton, NInput, NLayout,
   NLayoutContent, NLayoutSider, NPopconfirm, NUpload, useMessage,
@@ -48,15 +48,39 @@ function onFontsUpdated(fonts) {
   message.success('字体已上传')
 }
 
+let saveTimer = null
+let saving = false
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(saveText, 800)
+}
+
 async function saveText() {
+  if (saving) return // 上一笔请求未返回时跳过，由其完成后补发
+  saving = true
+  const snap = editorText.value
   try {
-    applyMeta(await postText(editorText.value), true)
-    dirty.value = false
-    message.success(`已更新：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
+    applyMeta(await postText(snap), false)
+    if (editorText.value === snap) {
+      dirty.value = false
+      message.success(`已更新：${meta.value.total_pages} 页 · ${meta.value.char_count} 字`)
+    } else {
+      dirty.value = true // 请求期间又有输入，不回填旧文本，稍后补发最新
+      scheduleSave()
+    }
   } catch (e) {
     message.error(e.message)
+  } finally {
+    saving = false
   }
 }
+
+watch(editorText, (v) => {
+  if (v === meta.value.text) return // 载入/导入/保存回填不触发，仅响应真实编辑
+  dirty.value = true
+  scheduleSave()
+})
 
 async function onDocx({ file, onFinish, onError }) {
   try {
@@ -147,7 +171,7 @@ function exportFile(kind) {
             <span class="editor-count">{{ editorText.length }} 字</span>
           </div>
           <div class="editor-body">
-            <n-input v-model:value="editorText" type="textarea" @update:value="dirty = true"
+            <n-input v-model:value="editorText" type="textarea"
                      :autosize="false" style="height: 100%"
                      placeholder="每行一个段落，支持直接粘贴" />
           </div>
