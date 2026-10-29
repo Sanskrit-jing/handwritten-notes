@@ -47,6 +47,8 @@ def main():
     if not _port_open(port):
         _alert("内置服务启动失败，请查看控制台日志。")
         sys.exit(1)
+    # pywebview 默认静默取消下载（ALLOW_DOWNLOADS=False），开启后导出弹"另存为"
+    webview.settings["ALLOW_DOWNLOADS"] = True
     webview.create_window("手写记录", f"http://{HOST}:{port}",
                           width=1500, height=950)
     webview.start()
