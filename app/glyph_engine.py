@@ -101,15 +101,18 @@ class GlyphEngine:
             elif op == "lineTo":
                 cur.append((float(args[0][0]), float(args[0][1])))
             elif op == "qCurveTo":
-                # 畸形字形防护：曲线指令前无起点（无 moveTo）则跳过
-                if not cur:
-                    continue
                 # TrueType：任意个连续 off-curve 点 + 末位 on-curve（None 表示闭合回起点）
                 pts = [(float(p[0]), float(p[1])) for p in args if p is not None]
-                if len(args) and args[-1] is None:
-                    pts.append(cur[0])
-                on = pts[-1]
-                offs = pts[:-1]
+                if not pts:
+                    continue
+                closed = args[-1] is None
+                offs = pts if closed else pts[:-1]
+                if not cur:
+                    # TrueType 合法形态：轮廓无初始 on-curve（无 moveTo），
+                    # 隐式起点 = 首尾两个 off-curve 的中点（手写字体常用此形态）
+                    cur = [((offs[-1][0] + offs[0][0]) / 2.0,
+                            (offs[-1][1] + offs[0][1]) / 2.0)]
+                on = cur[0] if closed else pts[-1]
                 prev = cur[-1]
                 if len(offs) == 1:
                     cur.extend(quad_samples(prev, offs[0], on))

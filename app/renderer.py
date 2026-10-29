@@ -8,6 +8,7 @@
 - 整页以 2x 超采样绘制后 LANCZOS 缩小，获得抗锯齿。
 - 涂改痕迹（单横线/双横线/涂黑团）在字符绘制完成后叠加。
 """
+import logging
 import math
 
 import numpy as np
@@ -15,6 +16,8 @@ from PIL import Image, ImageDraw
 
 from .glyph_engine import glyph_engine
 from .params import INK_COLORS, PAGE_H, PAGE_W, Params
+
+log = logging.getLogger(__name__)
 
 RULE_COLOR = (215, 222, 230)   # 横线/方格 #D7DEE6
 PAPER_COLOR = (255, 255, 255)
@@ -97,7 +100,9 @@ def _draw_char(img, draw, params: Params, ci, dev):
     try:
         strokes = glyph_engine.strokes(params.font_path, ci.char)
         upem = glyph_engine._load(params.font_path)[2]
-    except Exception:
+    except Exception as e:
+        # 字形提取失败必须留痕，禁止静默吞掉导致整字消失无迹可查
+        log.warning("字形提取失败 %s %r: %s", params.font_path, ci.char, e)
         return
 
     scale = ci.size / upem
