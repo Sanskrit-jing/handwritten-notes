@@ -107,15 +107,38 @@ function exportFile(kind) {
 </script>
 
 <template>
-  <n-layout has-sider class="root">
-    <n-layout-sider :width="340" bordered content-style="height: 100%; overflow: auto;">
+  <div class="root">
+    <header class="topbar">
       <div class="brand">
         <span class="logo">手写记录</span>
         <span class="sub">Web 版</span>
       </div>
-      <ParamPane :meta="meta" @change="onParamChange" @fonts-updated="onFontsUpdated" />
-    </n-layout-sider>
-    <n-layout-content content-style="height: 100%;">
+      <div class="actions">
+        <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
+          <n-button size="small" :loading="busy">导入 Word</n-button>
+        </n-upload>
+        <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
+          <n-button size="small">背景图片</n-button>
+        </n-upload>
+        <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
+          <template #trigger>
+            <n-button size="small" quaternary>清除背景</n-button>
+          </template>
+          确认清除当前背景模板？
+        </n-popconfirm>
+        <n-button size="small" @click="reshuffle">换一版笔迹</n-button>
+        <div class="spacer" />
+        <n-button size="small" @click="exportFile('png')">导出 PNG</n-button>
+        <n-button size="small" type="primary" @click="exportFile('pdf')">导出 PDF</n-button>
+      </div>
+    </header>
+    <n-layout has-sider class="body">
+      <n-layout-sider :width="340" bordered content-style="height: 100%; overflow: auto;">
+        <div class="param-sider-bg">
+          <ParamPane :meta="meta" @change="onParamChange" @fonts-updated="onFontsUpdated" />
+        </div>
+      </n-layout-sider>
+      <n-layout-content content-style="height: 100%;">
       <div class="main-cols">
         <aside class="editor-col">
           <div class="editor-head">
@@ -134,24 +157,6 @@ function exportFile(kind) {
           </div>
         </aside>
         <section class="preview-col">
-          <div class="toolbar">
-            <n-upload :custom-request="onDocx" :show-upload-list="false" accept=".docx">
-              <n-button size="small" :loading="busy">导入 Word</n-button>
-            </n-upload>
-            <n-upload :custom-request="onBg" :show-upload-list="false" accept=".png,.jpg,.jpeg,.webp">
-              <n-button size="small">背景图片</n-button>
-            </n-upload>
-            <n-popconfirm v-if="meta.params?.bg_name" @positive-click="onBgClear">
-              <template #trigger>
-                <n-button size="small" quaternary>清除背景</n-button>
-              </template>
-              确认清除当前背景模板？
-            </n-popconfirm>
-            <n-button size="small" @click="reshuffle">换一版笔迹</n-button>
-            <div class="spacer" />
-            <n-button size="small" @click="exportFile('png')">导出 PNG</n-button>
-            <n-button size="small" type="primary" @click="exportFile('pdf')">导出 PDF</n-button>
-          </div>
           <div class="info-line">
             <template v-if="meta.total_pages">
               {{ meta.total_pages }} 页 · {{ meta.char_count }} 字
@@ -163,37 +168,57 @@ function exportFile(kind) {
           <PreviewPane v-model:page="page" :total-pages="meta.total_pages ?? 0" :tick="tick" />
         </section>
       </div>
-    </n-layout-content>
-  </n-layout>
+      </n-layout-content>
+    </n-layout>
+  </div>
 </template>
 
 <style scoped>
 .root {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7e1;
 }
 .brand {
-  padding: 14px 14px 6px;
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
 .logo {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 1px;
 }
 .sub {
   font-size: 11px;
   color: #9aa394;
 }
-.toolbar {
+.actions {
+  flex: 1;
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 10px 16px 0;
 }
 .spacer {
   flex: 1;
+}
+.body {
+  flex: 1;
+  min-height: 0;
+}
+.param-sider-bg {
+  min-height: 100%;
+  background: #f5f7f3;
 }
 .info-line {
   padding: 6px 18px 0;
@@ -216,7 +241,7 @@ function exportFile(kind) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: #eef0ec;
+  background: #e9ece6;
 }
 .editor-head {
   padding: 14px 14px 6px;
