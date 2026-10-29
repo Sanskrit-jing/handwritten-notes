@@ -1,10 +1,10 @@
 ; 手写记录 - Inno Setup 安装包脚本
 ; 前置：先运行 pyinstaller 产出 dist\HandwrittenNotes\
-; 产物：releases\HandwrittenNotes_Setup_1.0.0.exe
+; 产物：releases\HandwrittenNotes_Setup_1.0.1.exe
 
 #define MyAppName "手写记录"
 #define MyAppNameEn "HandwrittenNotes"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Sanskrit-jing"
 
 [Setup]
