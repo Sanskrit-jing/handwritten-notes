@@ -22,13 +22,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from PIL import Image
 
+from app.bg_template import detect_rule_lines
 from app.docx_parser import Para, parse_docx
 from app.exporter import export_pdf, export_png
 from app.fonts import PROJECT_FONTS_DIR, available_fonts
 from app.layout_engine import layout_document
 from app.paths import DATA_DIR, RESOURCE_DIR
-from app.params import (DPI_BASE, DPI_PREVIEW, INK_COLORS, Params,
-                        PAPER_STYLES, REWRITE_MODES, STRIKE_MODES,
+from app.params import (DPI_BASE, DPI_PREVIEW, INK_COLORS, PAGE_H, PAGE_W,
+                        Params, PAPER_STYLES, REWRITE_MODES, STRIKE_MODES,
                         load_config, save_config)
 from app.renderer import render_page
 
@@ -57,6 +58,15 @@ _BG_EXTS = (".png", ".jpg", ".jpeg", ".webp")
 _BG_UPLOAD_DIR = os.path.join(DATA_DIR, "bg_uploads")
 
 
+def _detect_rules(img) -> list:
+    """检测背景横线，并从位图坐标缩放到排版页面坐标。"""
+    rules = detect_rule_lines(img)
+    if not rules:
+        return []
+    sx, sy = PAGE_W / img.width, PAGE_H / img.height
+    return [(y * sy, x0 * sx, x1 * sx) for y, x0, x1 in rules]
+
+
 class TextIn(BaseModel):
     text: str
 
@@ -80,11 +90,13 @@ class _State:
     def _reload_bg(self):
         path = self.params.bg_template_path
         self.params.bg_images = []
+        self.params.bg_rules = []
         if path and os.path.splitext(path)[1].lower() in _BG_EXTS \
                 and os.path.exists(path):
             try:
                 img = Image.open(path).convert("RGB")
                 self.params.bg_images = [img]
+                self.params.bg_rules = [_detect_rules(img)]   # 每张背景一页横线
             except Exception:
                 traceback.print_exc()
 
@@ -279,8 +291,9 @@ async def post_bg(file: UploadFile):
     STATE.params.bg_template_path = path
     STATE.params.bg_name = os.path.splitext(fn)[0]
     STATE.params.bg_images = [img]
-    STATE.params.bg_rules = []
-    STATE.invalidate(False)
+    rules = _detect_rules(img)
+    STATE.params.bg_rules = [rules]
+    STATE.invalidate(any(rules))   # 有横线：行位被横线接管，需版式级重排
     return {"bg_name": STATE.params.bg_name}
 
 
