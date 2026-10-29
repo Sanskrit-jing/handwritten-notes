@@ -1,0 +1,10 @@
+PyQt6>=6.7
+python-docx
+Pillow
+numpy
+fontTools
+img2pdf
+PyInstaller
+fastapi
+uvicorn
+python-multipart
